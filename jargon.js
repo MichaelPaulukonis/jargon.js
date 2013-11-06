@@ -1,8 +1,9 @@
 // adapted from code @ http://shinytoylabs.com/jargon/
 
-// TODO: implement node-or-browser js pattern from http://caolanmcmahon.com/posts/writing_for_node_and_the_browser/
-var jargon = function() {
+// implements node-or-browser js pattern from http://caolanmcmahon.com/posts/writing_for_node_and_the_browser/
+(function(exports) {
 
+    // more parts-of-speech? per http://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
     var wordlists = {
         abbreviations: ["TCP", "HTTP", "SDD", "RAM", "GB", "CSS", "SSL", "AGP", "SQL", "FTP", "PCI", "AI", "ADP", "RSS", "XML", "EXE", "COM", "HDD", "THX", "SMTP", "SMS", "USB", "PNG"],
         adjectives: ["auxiliary", "primary", "back-end", "digital", "open-source", "virtual", "cross-platform", "redundant", "online", "haptic", "multi-byte", "bluetooth", "wireless", "1080p", "neural", "optical", "solid state", "mobile"],
@@ -10,7 +11,9 @@ var jargon = function() {
         verbs: ["back up", "bypass", "hack", "override", "compress", "copy", "navigate", "index", "connect", "generate", "quantify", "calculate", "synthesize", "input", "transmit", "program", "reboot", "parse"],
         ingverbs: ["backing up", "bypassing", "hacking", "overriding", "compressing", "copying", "navigating", "indexing", "connecting", "generating", "quantifying", "calculating", "synthesizing", "transmitting", "programming", "parsing"]
     };
-    
+
+    // I'd like to see these reduced to a single element, where the place-hose {n} is the type
+    // eg "If we {verb} the {noun}, we can get to the {abbreviaation} {noun} through the {adjective} {abbreviation} {noun}"
     var constructs = [
         {
             types: ["verb", "noun", "abbreviation", "noun", "adjective", "abbreviation", "noun"],
@@ -86,7 +89,7 @@ var jargon = function() {
         for (var index = 0; index < construct.types.length; index++) {
 
             var type = construct.types[index];
-            var words = wordlists[type + "s"];
+            var words = wordlists[type + "s"]; // yeah, about that ' + "s"'.... lose it.
             var wordindex = Math.floor(Math.random() * words.length);
             var cache = caches[type];
             // don't repeat a word
@@ -126,12 +129,9 @@ var jargon = function() {
 
     clearcache(); // auto-init
 
-    return { Generate: generate,
-             WordLists: wordlists,
-             Constructs: constructs,
-             Caches: caches
-           };
+    exports.Generate = generate;
+    exports.WordLists = wordlists;
+    exports.Constructs = constructs;
+    exports.Caches = caches;
     
-}();
-
-module.exports = jargon;
+})(typeof exports === 'undefined' ? this['jargon'] = {} : exports);
