@@ -1,7 +1,11 @@
 // adapted from code @ http://shinytoylabs.com/jargon/
+/*global exports */
+/*eslint plusplus: true */
 
 // implements node-or-browser js pattern from http://caolanmcmahon.com/posts/writing_for_node_and_the_browser/
+// also referenced @ http://stackoverflow.com/questions/7327164/common-module-in-node-js-and-browser-javascript
 (function(exports) {
+    "use strict";
 
     // more parts-of-speech? per http://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
     var wordlists = {
@@ -62,22 +66,39 @@
         verb: {},
         ingverbcache: {}
     };
-    
+
     var clearcache = function () {
-        
-        caches.abbreviation = new Array;
-        caches.adjective = new Array;
-        caches.noun = new Array;
-        caches.verb = new Array;
-        caches.ingverb = new Array;
+
+        caches.abbreviation = [];
+        caches.adjective = [];
+        caches.noun = [];
+        caches.verb = [];
+        caches.ingverb = [];
     };
+
+    // from http://stackoverflow.com/questions/5075395/alternative-to-jquery-inarray
+    // added to remove a jQuery dependency
+    var inArray = function(elem, array) {
+        if ( array.indexOf ) {
+            return array.indexOf( elem );
+        }
+
+        for ( var i = 0, length = array.length; i < length; i++ ) {
+            if ( array[ i ] === elem ) {
+                return i;
+            }
+        }
+
+        return -1;
+    };
+
 
     var generate = function (cindex) {
 
         clearcache();
 
         var construct, sentence;
-        
+
         // if cindex is provided AND a valid construct index, use it;
         if (cindex && constructs[cindex]) {
             construct = constructs[cindex];
@@ -110,22 +131,7 @@
 
         return sentence;
     };
-    
-    // from http://stackoverflow.com/questions/5075395/alternative-to-jquery-inarray
-    // added to remove a jQuery dependency
-    var inArray = function(elem, array) {
-        if ( array.indexOf ) {
-            return array.indexOf( elem );
-        }
 
-        for ( var i = 0, length = array.length; i < length; i++ ) {
-            if ( array[ i ] === elem ) {
-                return i;
-            }
-        }
-
-        return -1;
-    };
 
     clearcache(); // auto-init
 
@@ -133,5 +139,5 @@
     exports.WordLists = wordlists;
     exports.Constructs = constructs;
     exports.Caches = caches;
-    
-})(typeof exports === 'undefined' ? this['jargon'] = {} : exports);
+
+})(typeof exports === "undefined" ? this.jargon = {} : exports);
