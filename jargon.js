@@ -33,28 +33,29 @@
       // local scope (won't be exposed for debugging)
       var caches = {};
 
-      var construct, sentence;
+      var template;
+
+      console.log("index: " + cindex + " template: " + this.templates[cindex]);
 
       // if cindex is provided AND a valid construct index, use it;
-      if (cindex && this.constructs[cindex]) {
-        construct = this.constructs[cindex];
+      if (cindex >= 0 && this.templates[cindex]) {
+        template = this.templates[cindex];
       } else {
-        construct = this.constructs[Math.floor(Math.random() * this.constructs.length)];
+        // TODO: optionally seed random per
+        //  http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html#more
+        template = this.templates[Math.floor(Math.random() * this.templates.length)];
       }
-      sentence = construct.structure;
 
-      for (var index = 0; index < construct.types.length; index++) {
-
-        var type = construct.types[index];
-        var words = this.wordlists[type];
+      var tag, re = /\{(\w*?)\}/g, sentence = template;
+      while((tag = re.exec(template)) !== null) {
+        var type = tag[0].replace(/\{|\}/g, "");
+        var words = this.words[type];
         var wordindex = Math.floor(Math.random() * words.length);
-          if (!caches[type]) {
-              // initialize on first encounter
-              caches[type] = [];
-          }
+        if (!caches[type]) {
+          // initialize on first encounter
+          caches[type] = [];
+        }
         var cache = caches[type];
-
-          // console.log('type: ' + type + ' cache: ' + cache);
 
         // don't repeat a word
         // NOTE: potential infinite loop exists for small arrays and a large-number of words from that type
@@ -68,7 +69,7 @@
         }
         cache.push(wordindex);
         var word = words[wordindex];
-        sentence = sentence.replace("{" + index + "}", word);
+        sentence = sentence.replace("{" + type + "}", word);
 
       };
 
@@ -82,31 +83,21 @@
   var create = function create() {
     var sentence = Object.create(sentenceProto);
 
-    sentence.wordlists = {
+    sentence.words = {
       adjective: ["blue", "large", "wholesome", "obscure"],
       noun: ["noun", "code", "node", "byte"],
       verb: ["run", "execute", "randomize"],
-      ingverb: ["running", "executing", "randomizing"]
+      gerund: ["running", "executing", "randomizing"]
     };
 
-    sentence.constructs = [
-      {
-        types: ["adjective", "noun", "adjective", "noun", "ingverb", "verb", "noun"],
-        structure: "This is the {0} {1} that the {2} {3} is {4} for to {5} the {6}."
-      },
-      {
-        types: ["adjective", "noun", "ingverb", "noun"],
-        structure: "The {0} {1} is {2} on the {3}."
-      }
+    sentence.templates = [
+      "This is the {adjective} {noun} that the {adjective} {verb} is {gerund} for to {verb} the {noun}.",
+      "The {adjective} {noun} is {gerund} on the {noun}."
     ];
 
     return sentence;
   };
 
   exports.create = create;
-
-  // exports.Generate = generate;
-  // exports.WordLists = wordlists;
-  // exports.Constructs = constructs;
 
 })(typeof exports === "undefined" ? this.jargon = {} : exports);
