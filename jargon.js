@@ -31,11 +31,7 @@
     generate: function generate(cindex) {
 
       // local scope (won't be exposed for debugging)
-      var caches = {};
-
-      var template;
-
-      console.log("index: " + cindex + " template: " + this.templates[cindex]);
+      var template, caches = {};
 
       // if cindex is provided AND a valid construct index, use it;
       if (cindex >= 0 && this.templates[cindex]) {
@@ -58,13 +54,14 @@
         var cache = caches[type];
 
         // don't repeat a word
-        // NOTE: potential infinite loop exists for small arrays and a large-number of words from that type
-        // but no current structure exhibits this potential
-
+        // unless we've exhausted the cache; then start over
+        // TODO: some unit-tests would be nice
         while (inArray(wordindex, cache) !== -1) {
           wordindex++;
           if (wordindex >= words.length) {
             wordindex = 0;
+            cache = [];
+            break;
           }
         }
         cache.push(wordindex);
