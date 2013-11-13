@@ -1,0 +1,29 @@
+{
+  "name": "sentence-generator.js",
+  "version": "0.1.0",
+  "description": "Generation of sentences from templates and wordlists.",
+  "main": "node.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "seed-random": "~2.2.0",
+    "vows": "~0.7.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node tests/test-sentence-generator.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MichaelPaulukonis/jargon.js.git"
+  },
+  "keywords": [
+    "text-generation",
+    "text-processing"
+  ],
+  "author": "Michael Paulukonis",
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "gitHead": "e66a428b7a0ff8cde69121bcda00db20b2bcc2cc"
+}

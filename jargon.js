@@ -1,5 +1,5 @@
 // adapted from code @ http://shinytoylabs.com/jargon/
-/*global exports console*/
+/*global exports console require*/
 /*eslint plusplus: true */
 
 // implements node-or-browser js pattern from http://caolanmcmahon.com/posts/writing_for_node_and_the_browser/
@@ -7,12 +7,11 @@
 (function(exports) {
   "use strict";
 
-
   // from http://stackoverflow.com/questions/5075395/alternative-to-jquery-inarray
   // added to remove a jQuery dependency
   // while node.js has array.prototype.indexOf
   // this file is also setup to run in browsers that may not have it....
-  var inArray = function inArray(elem, array) {
+  var inArray = function (elem, array) {
     if ( array.indexOf ) {
       return array.indexOf( elem );
     }
@@ -28,7 +27,14 @@
 
   var sentenceProto = {
 
-    generate: function generate(cindex) {
+    generate: function (cindex) {
+
+      // will no longer work in browser, unless browserify [or suchlike] is used....
+      // https://npmjs.org/package/seed-random
+      var seeder = require("seed-random");
+      if (this.seed) {
+        seeder(this.seed, {global: true});
+      }
 
       // local scope (won't be exposed for debugging)
       var template, caches = {};
@@ -44,8 +50,13 @@
 
       var tag, re = /\{(\w*?)\}/g, sentence = template;
       while((tag = re.exec(template)) !== null) {
-        var type = tag[0].replace(/\{|\}/g, "");
-        var words = this.words[type];
+        var words, type = tag[0].replace(/\{|\}/g, "");
+        if (this.words[type]) {
+          words = this.words[type];
+        } else {
+          continue; // ignore the tag and proceed to the next...
+        }
+
         var wordindex = Math.floor(Math.random() * words.length);
         if (!caches[type]) {
           // initialize on first encounter
@@ -54,8 +65,7 @@
         var cache = caches[type];
 
         // don't repeat a word
-        // unless we've exhausted the cache; then start over
-        // TODO: some unit-tests would be nice
+        // unless we've exhausted the cache; then clear the slate
         while (inArray(wordindex, cache) !== -1) {
           wordindex++;
           if (wordindex >= words.length) {
@@ -70,6 +80,9 @@
 
       };
 
+      // capitalize first letter of sentence.
+      // do we ALWAYS want to do this?
+      // well, so far. so leave it alone.....
       sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
 
       return sentence;
@@ -77,9 +90,11 @@
 
   };
 
-  var create = function create() {
+  var create = function() {
     var sentence = Object.create(sentenceProto);
 
+    // default words and templates
+    // To override in your new object, just set them again
     sentence.words = {
       adjective: ["blue", "large", "wholesome", "obscure"],
       noun: ["noun", "code", "node", "byte"],
@@ -91,6 +106,8 @@
       "This is the {adjective} {noun} that the {adjective} {verb} is {gerund} for to {verb} the {noun}.",
       "The {adjective} {noun} is {gerund} on the {noun}."
     ];
+
+    sentence.seed = null; // populate to seed the random-generator
 
     return sentence;
   };
