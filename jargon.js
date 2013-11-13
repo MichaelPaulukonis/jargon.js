@@ -43,8 +43,6 @@
       if (cindex >= 0 && this.templates[cindex]) {
         template = this.templates[cindex];
       } else {
-        // TODO: optionally seed random per
-        //  http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html#more
         template = this.templates[Math.floor(Math.random() * this.templates.length)];
       }
 
