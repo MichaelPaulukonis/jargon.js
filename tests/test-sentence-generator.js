@@ -8,67 +8,76 @@ var vows = require('vows'),
 // in a meaningful way beyond breakage
 // I guess "non-null" string or something....
 sentence.words = {
-  noun: ["noun"]
+    noun: ["noun"]
 };
 
 sentence.templates = [
-  "this will be capitalized",
-  "A {noun} is a {noun} is a {noun}.",
-  "A {thing} is not found."
+    "this will be capitalized",
+    "A {noun} is a {noun} is a {noun}.",
+    "A {thing} is not found."
 ];
 
 
 vows.describe('Test the sentence generator').addBatch({
 
-  'When tag-count > word-count, words will repeat': {
-    // original implementation of code had infinite loop if tag-count > word-count
-    topic: function() { return sentence.generate(1); },
+    'When tag-count > word-count, words will repeat': {
+        // original implementation of code had infinite loop if tag-count > word-count
+        topic: function() { return sentence.generate(1); },
 
-    'we get a valid sentence': function(topic) {
-      assert.equal(topic, 'A noun is a noun is a noun.');
-    }
-  },
-  'Random seeds produce predictable results': {
-    // also note that tests are run asynchronously, and in their own context
-    // redefing the sentence properties does not affect other sentences
-    topic: function() {
-      sentence.seed = 'foo';
-      sentence.words = { noun: ["noun", "toy", "boat"] };
-      return [ sentence.generate(1), sentence.generate(1) ];
+        'we get a valid sentence': function(topic) {
+            assert.equal(topic, 'A noun is a noun is a noun.');
+        }
     },
-    'Should be the same thing every time': function(topic) {
-      assert.deepEqual(topic, ['A toy is a boat is a noun.', 'A toy is a boat is a noun.']);
+    'Random seeds produce predictable results': {
+        // also note that tests are run asynchronously, and in their own context
+        // redefing the sentence properties does not affect other sentences
+        topic: function() {
+            sentence.seed = 'foo';
+            sentence.words = { noun: ["noun", "toy", "boat"] };
+            return [ sentence.generate(1), sentence.generate(1) ];
+        },
+        'Should be the same thing every time': function(topic) {
+            assert.deepEqual(topic, ['A toy is a boat is a noun.', 'A toy is a boat is a noun.']);
+        }
+    },
+    'First letter of sentence is capitalized': {
+        // we could check that the first-letter is equal to the first-letter toUpperCase
+        // but that might be arbitrarily true for the other sentence templates.
+        topic: function() { return sentence.generate(0); },
+        'Capitalized': function(topic) {
+            assert.equal(topic, 'This will be capitalized');
+        }
+    },
+    'Constant templates generate as constants': {
+        // No errors for a template with no tags
+        // and it returns itself (capitalized)
+        topic: function() { return sentence.generate(0); },
+        'This is a constant template': function(topic) {
+            assert.equal(topic, 'This will be capitalized');
+        }
+    },
+    'The first [0th] template can be explicitly referenced': {
+        // An early implementation had a poor truthiness check that failed when template-index := 0
+        topic: function() { return sentence.generate(0); },
+        'First template used': function(topic) {
+            assert.equal(topic, 'This will be capitalized');
+        }
+    },
+    'A tag not found in the words-array is ignored': {
+        // this may not be the desired behavior on-going
+        // but it's better than crashing
+        topic: function() { return sentence.generate(2); },
+        'Unknown tag is ignored': function(topic) {
+            assert.equal(topic, 'A {thing} is not found.');
+        }
+    },
+    'cache-less selector chooses from self': {
+        topic: function() {
+            sentence.templates = ["This has {one|one} option."];
+            return sentence.generate(0);
+        },
+        'choses from self': function(topic) {
+            assert.equal(topic, "This has one option.");
+        }
     }
-  },
-  'First letter of sentence is capitalized': {
-    // we could check that the first-letter is equal to the first-letter toUpperCase
-    // but that might be arbitrarily true for the other sentence templates.
-    topic: function() { return sentence.generate(0); },
-    'Capitalized': function(topic) {
-      assert.equal(topic, 'This will be capitalized');
-    }
-  },
-  'Constant templates generate as constants': {
-    // No errors for a template with no tags
-    // and it returns itself (capitalized)
-    topic: function() { return sentence.generate(0); },
-    'This is a constant template': function(topic) {
-      assert.equal(topic, 'This will be capitalized');
-    }
-  },
-  'The first [0th] template can be explicitly referenced': {
-    // An early implementation had a poor truthiness check that failed when template-index := 0
-    topic: function() { return sentence.generate(0); },
-    'First template used': function(topic) {
-      assert.equal(topic, 'This will be capitalized');
-    }
-  },
-  'A tag not found in the words-array is ignored': {
-    // this may not be the desired behavior on-going
-    // but it's better than crashing
-    topic: function() { return sentence.generate(2); },
-    'Unknown tag is ignored': function(topic) {
-      assert.equal(topic, 'A {thing} is not found.');
-    }
-  }
 }).run(); // run it
