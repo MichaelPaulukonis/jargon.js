@@ -17,3 +17,9 @@ Tests using [vows](http://vowsjs.org/) are found in `/tests`.
 
 ## see also
 This [nlp-language](http://www.playchilla.com/a-programming-language-for-natural-language-generation) includes a sample that works something like what jargon is doing. More programatically. And in Java. And requiring a large back-end database of words. Which is a standard DB, and isn't such a bad thing.
+
+
+
+## text templating
+http://stackoverflow.com/questions/4049129/creating-a-simple-scripting-language-in-c-sharp
+http://stackoverflow.com/questions/3215010/howto-c-sharp-string-to-sql-full-text-catalog-search/3215216#3215216
