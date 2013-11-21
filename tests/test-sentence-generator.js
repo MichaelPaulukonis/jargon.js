@@ -81,3 +81,26 @@ vows.describe('Test the sentence generator').addBatch({
         }
     }
 }).run(); // run it
+
+
+vows.describe('Test the memory').addBatch({
+    'remembered-tag is reused': {
+        topic: function() {
+            // assert that the first word occurs three times
+            // perhaps not the best test in the world....
+            // if type:identifier is not recognized as a valid word, it will not be replaced in template
+            sentence.words = {
+                noun: ["noun", "bear", "cat"],
+                "noun:1": ["noun", "bear", "car"]
+            };
+            sentence.templates = ["{noun:1} is a {noun:1} is a {noun:1}"];
+            var s = sentence.generate(0);
+            var firstWord = s.split(" ")[0];
+            var r = new RegExp(firstWord, "ig");
+            return s.match(r).length;
+        },
+        'remembers tag': function(topic) {
+            assert.equal(topic, 3);
+        }
+    }
+}).run();
