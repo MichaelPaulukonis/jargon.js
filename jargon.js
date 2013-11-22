@@ -29,15 +29,13 @@
 
         generate: function (cindex) {
 
-            // will no longer work in browser, unless browserify [or suchlike] is used....
             // https://npmjs.org/package/seed-random
             var seeder = require("seed-random");
             if (this.seed) {
                 seeder(this.seed, {global: true});
             }
 
-            // local scope (won't be exposed for debugging)
-            var template, caches = {};
+            var template, caches = {}, memory = {};
 
             // if cindex is provided AND a valid construct index, use it;
             if (cindex >= 0 && this.templates[cindex]) {
@@ -51,43 +49,64 @@
                 sentence = template;
 
             while((tag = re.exec(template)) !== null) {
-                var words, type = tag[0].replace(/\{|\}/g, "");
-                // tag could be of format {one|two|three} and should then provide an option
-                if (type.indexOf("|") > 0) {
-                    // it's a cacheless selector
-                    words = type.split("|");
-                    word = words[Math.floor(Math.random() * words.length)];
-                } else {
-                    if (this.words[type]) {
-                        words = this.words[type];
-                    } else {
-                        continue; // ignore the tag and proceed to the next...
-                    }
-
-                    var wordindex = Math.floor(Math.random() * words.length);
-                    if (!caches[type]) {
-                        // initialize on first encounter
-                        caches[type] = [];
-                    }
-                    var cache = caches[type];
-
-                    // don't repeat a word
-                    // unless we've exhausted the cache; then clear the slate
-                    while (inArray(wordindex, cache) !== -1) {
-                        wordindex++;
-                        if (wordindex >= words.length) {
-                            wordindex = 0;
-                            cache = [];
-                            break;
-                        }
-                    }
-                    cache.push(wordindex);
-                    var word = words[wordindex];
+                var words, word,
+                    fulltype = tag[0].replace(/\{|\}/g, ""),
+                    type = fulltype,
+                    idStart = type.indexOf(":"),
+                    hasId = (idStart > 0), // TODO: a type must be at least 1 char, so build some tests
+                    id = "";
+                // type could contain an identifier... in which case, we must "remember" it....
+                if (hasId) {
+                    id = type.slice(idStart + 1);
+                    type = type.slice(0, idStart);
                 }
 
-                sentence = sentence.replace("{" + type + "}", word);
+                if (memory[id]) {
+                    word = memory[id];
+                } else {
 
-            };
+                    // type could be of format {one|two|three} and should then provide an option
+                    if (type.indexOf("|") > 0) {
+                        // it's a cacheless selector
+                        words = type.split("|");
+                        word = words[Math.floor(Math.random() * words.length)];
+                    } else {
+                        if (this.words[type]) {
+                            words = this.words[type];
+                        } else {
+                            continue; // ignore the tag and proceed to the next...
+                        }
+
+                        var wordindex = Math.floor(Math.random() * words.length);
+                        if (!caches[type]) {
+                            // initialize on first encounter
+                            caches[type] = [];
+                        }
+                        var cache = caches[type];
+
+                        // don't repeat a word
+                        // unless we've exhausted the cache; then clear the slate
+                        while (inArray(wordindex, cache) !== -1) {
+                            wordindex++;
+                            if (wordindex >= words.length) {
+                                wordindex = 0;
+                                cache = [];
+                                break;
+                            }
+                        }
+                        cache.push(wordindex);
+                        word = words[wordindex];
+                    }
+
+                    if (hasId) {
+                        memory[id] = word;
+                    }
+
+                };
+
+                sentence = sentence.replace("{" + fulltype + "}", word);
+
+            }
 
             // capitalize first letter of sentence.
             // do we ALWAYS want to do this?
