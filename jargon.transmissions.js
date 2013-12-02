@@ -98,7 +98,7 @@ var transmissions = function() {
     "Begin Transmission.",
     "{w}?",
     "With a {question}.",
-    "What {start}'s from a {question}?",
+    "What {start}s from a {question}?",
     "{season} {weather} on the {water}.",
     "{distant} {landscape}s, to {beckon} {usthem}.",
     "{havent} the {necessary} {cases} been {prepared} yet?",
