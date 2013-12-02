@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <title>TRANSMISSIONS</title>
+    <style>
+      #trans { font-family: courier New, Courier;
+      font-size: 10pt;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="trans"></div>
+
+    <script src="./bundle.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      // if you want to seed the generator (ie, force a known pattern)
+      // rt.sentence.seed = "hello";
+      var text = rt.generate().replace(/\n/g, "<br />");
+      var trans = document.getElementById("trans");
+      trans.innerHTML = text;
+    </script>
+  </body>
+</html>

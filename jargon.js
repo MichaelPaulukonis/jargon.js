@@ -1,10 +1,10 @@
 // adapted from code @ http://shinytoylabs.com/jargon/
-/*global exports console require*/
+/*global module exports console require*/
 /*eslint plusplus: true */
 
 // implements node-or-browser js pattern from http://caolanmcmahon.com/posts/writing_for_node_and_the_browser/
 // also referenced @ http://stackoverflow.com/questions/7327164/common-module-in-node-js-and-browser-javascript
-(function(exports) {
+var jargon = function() {
     "use strict";
 
     // from http://stackoverflow.com/questions/5075395/alternative-to-jquery-inarray
@@ -140,6 +140,8 @@
         return sentence;
     };
 
-    exports.create = create;
+    return { create: create };
 
-})(typeof exports === "undefined" ? this.jargon = {} : exports);
+}();
+
+ module.exports = jargon;

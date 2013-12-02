@@ -1,3 +1,153 @@
+;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+// adapted from code @ http://shinytoylabs.com/jargon/
+/*global module exports console require*/
+/*eslint plusplus: true */
+
+// implements node-or-browser js pattern from http://caolanmcmahon.com/posts/writing_for_node_and_the_browser/
+// also referenced @ http://stackoverflow.com/questions/7327164/common-module-in-node-js-and-browser-javascript
+var jargon = function() {
+    "use strict";
+
+    // from http://stackoverflow.com/questions/5075395/alternative-to-jquery-inarray
+    // added to remove a jQuery dependency
+    // while node.js has array.prototype.indexOf
+    // this file is also setup to run in browsers that may not have it....
+    var inArray = function (elem, array) {
+        if ( array.indexOf ) {
+            return array.indexOf( elem );
+        }
+
+        for ( var i = 0, length = array.length; i < length; i++ ) {
+            if ( array[ i ] === elem ) {
+                return i;
+            }
+        }
+
+        return -1;
+    };
+
+    var sentenceProto = {
+
+        generate: function (cindex) {
+
+            // https://npmjs.org/package/seed-random
+            var seeder = require("seed-random");
+            if (this.seed) {
+                seeder(this.seed, {global: true});
+            }
+
+            var template, caches = {}, memory = {};
+
+            // if cindex is provided AND a valid construct index, use it;
+            if (cindex >= 0 && this.templates[cindex]) {
+                template = this.templates[cindex];
+            } else {
+                template = this.templates[Math.floor(Math.random() * this.templates.length)];
+            }
+
+            var tag,
+                re = /\{.*?\}/g,
+                sentence = template;
+
+            while((tag = re.exec(template)) !== null) {
+                var words, word,
+                    fulltype = tag[0].replace(/\{|\}/g, ""),
+                    type = fulltype,
+                    idStart = type.indexOf(":"),
+                    hasId = (idStart > 0), // TODO: a type must be at least 1 char, so build some tests
+                    id = "";
+                // type could contain an identifier... in which case, we must "remember" it....
+                if (hasId) {
+                    id = type.slice(idStart + 1);
+                    type = type.slice(0, idStart);
+                }
+
+                if (memory[id]) {
+                    word = memory[id];
+                } else {
+
+                    // type could be of format {one|two|three} and should then provide an option
+                    if (type.indexOf("|") > 0) {
+                        // it's a cacheless selector
+                        words = type.split("|");
+                        word = words[Math.floor(Math.random() * words.length)];
+                    } else {
+                        if (this.words[type]) {
+                            words = this.words[type];
+                        } else {
+                            continue; // ignore the tag and proceed to the next...
+                        }
+
+                        var wordindex = Math.floor(Math.random() * words.length);
+                        if (!caches[type]) {
+                            // initialize on first encounter
+                            caches[type] = [];
+                        }
+                        var cache = caches[type];
+
+                        // don't repeat a word
+                        // unless we've exhausted the cache; then clear the slate
+                        while (inArray(wordindex, cache) !== -1) {
+                            wordindex++;
+                            if (wordindex >= words.length) {
+                                wordindex = 0;
+                                cache = [];
+                                break;
+                            }
+                        }
+                        cache.push(wordindex);
+                        word = words[wordindex];
+                    }
+
+                    if (hasId) {
+                        memory[id] = word;
+                    }
+
+                };
+
+                sentence = sentence.replace("{" + fulltype + "}", word);
+
+            }
+
+            // capitalize first letter of sentence.
+            // do we ALWAYS want to do this?
+            // well, so far. so leave it alone.....
+            sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+
+            return sentence;
+        }
+
+    };
+
+    var create = function() {
+        var sentence = Object.create(sentenceProto);
+
+        // default words and templates
+        // To override in your new object, just set them again
+        sentence.words = {
+            adjective: ["blue", "large", "wholesome", "obscure"],
+            noun: ["noun", "code", "node", "byte"],
+            verb: ["run", "execute", "randomize"],
+            gerund: ["running", "executing", "randomizing"]
+        };
+
+        sentence.templates = [
+            "This is the {adjective} {noun} that the {adjective} {verb} is {gerund} for to {verb} the {noun}.",
+            "The {adjective} {noun} is {gerund} on the {noun}."
+        ];
+
+        sentence.seed = null; // populate to seed the random-generator
+
+        return sentence;
+    };
+
+    return { create: create };
+
+}();
+
+ module.exports = jargon;
+
+},{"seed-random":3}],2:[function(require,module,exports){
 // set eslint options
 /*global module require exports */
 /* An example of using the core jargon engine [poor name choice for the file]
@@ -164,3 +314,185 @@ var transmissions = function() {
 }();
 
 module.exports = transmissions;
+
+},{"./jargon":1}],3:[function(require,module,exports){
+var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};'use strict';
+
+var width = 256;// each RC4 output is 0 <= x < 256
+var chunks = 6;// at least six RC4 outputs for each double
+var digits = 52;// there are 52 significant digits in a double
+var pool = [];// pool: entropy pool starts empty
+var GLOBAL = typeof global === 'undefined' ? window : global;
+
+//
+// The following constants are related to IEEE 754 limits.
+//
+var startdenom = Math.pow(width, chunks),
+    significance = Math.pow(2, digits),
+    overflow = significance * 2,
+    mask = width - 1;
+
+
+var oldRandom = Math.random;
+
+//
+// seedrandom()
+// This is the seedrandom function described above.
+//
+module.exports = function(seed, options) {
+  if (options && options.global === true) {
+    options.global = false;
+    Math.random = module.exports(seed, options);
+    options.global = true;
+    return Math.random;
+  }
+  var use_entropy = (options && options.entropy) || false;
+  var key = [];
+
+  // Flatten the seed string or build one from local entropy if needed.
+  var shortseed = mixkey(flatten(
+    use_entropy ? [seed, tostring(pool)] :
+    0 in arguments ? seed : autoseed(), 3), key);
+
+  // Use the seed to initialize an ARC4 generator.
+  var arc4 = new ARC4(key);
+
+  // Mix the randomness into accumulated entropy.
+  mixkey(tostring(arc4.S), pool);
+
+  // Override Math.random
+
+  // This function returns a random double in [0, 1) that contains
+  // randomness in every bit of the mantissa of the IEEE 754 value.
+
+  return function() {         // Closure to return a random double:
+    var n = arc4.g(chunks),             // Start with a numerator n < 2 ^ 48
+        d = startdenom,                 //   and denominator d = 2 ^ 48.
+        x = 0;                          //   and no 'extra last byte'.
+    while (n < significance) {          // Fill up all significant digits by
+      n = (n + x) * width;              //   shifting numerator and
+      d *= width;                       //   denominator and generating a
+      x = arc4.g(1);                    //   new least-significant-byte.
+    }
+    while (n >= overflow) {             // To avoid rounding up, before adding
+      n /= 2;                           //   last byte, shift everything
+      d /= 2;                           //   right using integer Math until
+      x >>>= 1;                         //   we have exactly the desired bits.
+    }
+    return (n + x) / d;                 // Form the number within [0, 1).
+  };
+};
+
+module.exports.resetGlobal = function () {
+  Math.random = oldRandom;
+};
+
+//
+// ARC4
+//
+// An ARC4 implementation.  The constructor takes a key in the form of
+// an array of at most (width) integers that should be 0 <= x < (width).
+//
+// The g(count) method returns a pseudorandom integer that concatenates
+// the next (count) outputs from ARC4.  Its return value is a number x
+// that is in the range 0 <= x < (width ^ count).
+//
+/** @constructor */
+function ARC4(key) {
+  var t, keylen = key.length,
+      me = this, i = 0, j = me.i = me.j = 0, s = me.S = [];
+
+  // The empty key [] is treated as [0].
+  if (!keylen) { key = [keylen++]; }
+
+  // Set up S using the standard key scheduling algorithm.
+  while (i < width) {
+    s[i] = i++;
+  }
+  for (i = 0; i < width; i++) {
+    s[i] = s[j = mask & (j + key[i % keylen] + (t = s[i]))];
+    s[j] = t;
+  }
+
+  // The "g" method returns the next (count) outputs as one number.
+  (me.g = function(count) {
+    // Using instance members instead of closure state nearly doubles speed.
+    var t, r = 0,
+        i = me.i, j = me.j, s = me.S;
+    while (count--) {
+      t = s[i = mask & (i + 1)];
+      r = r * width + s[mask & ((s[i] = s[j = mask & (j + t)]) + (s[j] = t))];
+    }
+    me.i = i; me.j = j;
+    return r;
+    // For robust unpredictability discard an initial batch of values.
+    // See http://www.rsa.com/rsalabs/node.asp?id=2009
+  })(width);
+}
+
+//
+// flatten()
+// Converts an object tree to nested arrays of strings.
+//
+function flatten(obj, depth) {
+  var result = [], typ = (typeof obj)[0], prop;
+  if (depth && typ == 'o') {
+    for (prop in obj) {
+      try { result.push(flatten(obj[prop], depth - 1)); } catch (e) {}
+    }
+  }
+  return (result.length ? result : typ == 's' ? obj : obj + '\0');
+}
+
+//
+// mixkey()
+// Mixes a string seed into a key that is an array of integers, and
+// returns a shortened string seed that is equivalent to the result key.
+//
+function mixkey(seed, key) {
+  var stringseed = seed + '', smear, j = 0;
+  while (j < stringseed.length) {
+    key[mask & j] =
+      mask & ((smear ^= key[mask & j] * 19) + stringseed.charCodeAt(j++));
+  }
+  return tostring(key);
+}
+
+//
+// autoseed()
+// Returns an object for autoseeding, using window.crypto if available.
+//
+/** @param {Uint8Array=} seed */
+function autoseed(seed) {
+  try {
+    GLOBAL.crypto.getRandomValues(seed = new Uint8Array(width));
+    return tostring(seed);
+  } catch (e) {
+    return [+new Date, GLOBAL, GLOBAL.navigator && GLOBAL.navigator.plugins,
+            GLOBAL.screen, tostring(pool)];
+  }
+}
+
+//
+// tostring()
+// Converts an array of charcodes to a string
+//
+function tostring(a) {
+  return String.fromCharCode.apply(0, a);
+}
+
+//
+// When seedrandom.js is loaded, we immediately mix a few bits
+// from the built-in RNG into the entropy pool.  Because we do
+// not want to intefere with determinstic PRNG state later,
+// seedrandom will not call Math.random on its own again after
+// initialization.
+//
+mixkey(Math.random(), pool);
+
+},{}],4:[function(require,module,exports){
+rt = require('./jargon.transmissions.js');
+//<alert(rt.generate());
+
+},{"./jargon.transmissions.js":2}]},{},[4])
+;
