@@ -1,9 +1,9 @@
 // set eslint options
-/*global require exports */
+/*global module require exports */
 /* An example of using the core jargon engine [poor name choice for the file]
  * with custom input
  */
-(function (exports) {
+var transmissions = function() {
   "use strict";
 
   var sentence = require("./jargon").create();
@@ -157,4 +157,10 @@
   exports.generate = newStory;
   exports.sentence = sentence;
 
-})(typeof exports === "undefined" ? this.orig = {} : exports);
+  return { generate: newStory,
+           sentence: sentence
+           };
+
+}();
+
+module.exports = transmissions;
